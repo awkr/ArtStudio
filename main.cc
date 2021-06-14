@@ -1,3 +1,3 @@
-#include <iostream>
+#include <Log.h>
 
-int main() { std::cout << "Hello, World." << std::endl; }
+int main() { log("Hello, World."); }
