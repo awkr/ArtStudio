@@ -12,7 +12,7 @@ static std::string date() {
     struct tm localTime;
     localtime_r(&t, &localTime);
     char buf[25];
-    std::strftime(buf, 19, "%Y/%m/%d %H:%M:%S", &localTime);
+    std::strftime(buf, 19, "%y/%m/%d %H:%M:%S", &localTime);
 
     // ms
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
