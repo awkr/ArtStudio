@@ -1,3 +1,8 @@
 #include <Log.h>
 
-int main() { log("Hello, World."); }
+int main() {
+    debug("Hello, World.");
+    info("Hello, World.");
+    warn("Hello, World.");
+    error("Hello, World.");
+}

@@ -22,11 +22,23 @@ static std::string date() {
     return buf;
 }
 
-#define log(fmt, args...)                                                      \
-    {                                                                          \
-        char buf[1024] = {0};                                                  \
-        auto t = date();                                                       \
-        snprintf(buf, sizeof(buf), "%s %s:%d#%s " fmt "\n", t.c_str(),         \
-                 __FILE__, __LINE__, __FUNCTION__, ##args);                    \
-        std::cout << buf;                                                      \
-    }
+const char *RED = "\033[0;31m";
+const char *GREEN = "\033[0;32m";
+const char *YELLOW = "\033[0;33m";
+const char *NC = "\033[0m"; // no color
+
+#define debug(fmt, args...)                                                    \
+    fprintf(stdout, "%s debug %s:%d#%s " fmt "\n", date().c_str(), __FILE__,   \
+            __LINE__, __FUNCTION__, ##args);
+
+#define info(fmt, args...)                                                     \
+    fprintf(stdout, "%s %sinfo%s %s:%d#%s " fmt "\n", date().c_str(), GREEN,   \
+            NC, __FILE__, __LINE__, __FUNCTION__, ##args);
+
+#define warn(fmt, args...)                                                     \
+    fprintf(stdout, "%s %swarn%s %s:%d#%s " fmt "\n", date().c_str(), YELLOW,  \
+            NC, __FILE__, __LINE__, __FUNCTION__, ##args);
+
+#define error(fmt, args...)                                                    \
+    fprintf(stdout, "%s %serror%s %s:%d#%s " fmt "\n", date().c_str(), RED,    \
+            NC, __FILE__, __LINE__, __FUNCTION__, ##args);
