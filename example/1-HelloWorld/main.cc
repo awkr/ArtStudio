@@ -18,8 +18,7 @@ void display() {
 
 int main() {
     if (!glfwInit()) {
-        error("glfw init error");
-        return EXIT_FAILURE;
+        fatal("glfw init error");
     }
 
 #ifdef __APPLE__
@@ -31,15 +30,13 @@ int main() {
 
     auto window = glfwCreateWindow(320, 240, "ArtStudio", nullptr, nullptr);
     if (!window) {
-        error("glfw create window error");
-        return EXIT_FAILURE;
+        fatal("glfw create window error");
     }
 
     glfwMakeContextCurrent(window);
 
     if (!gladLoadGL()) {
-        error("glad load gl error");
-        return EXIT_FAILURE;
+        fatal("glad load gl error");
     }
 
     info("OpenGL %s, GLSL %s", glGetString(GL_VERSION),
