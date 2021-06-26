@@ -8,8 +8,9 @@ target_include_directories(glad PUBLIC vendor/glad/include)
 
 add_subdirectory(vendor/glfw-3.3.4)
 
+add_subdirectory(src)
+
 include_directories(
-    src # 因不能只从头文件创建库，故此处只要 include 即可
     vendor/glm
     vendor/glfw-3.3.4/include
 )
