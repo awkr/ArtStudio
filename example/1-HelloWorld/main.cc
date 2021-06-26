@@ -11,6 +11,12 @@ void init() {
     glUseProgram(program);
 }
 
+void handleInput(GLFWwindow *window) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
+}
+
 void display() {
     static const float bgColor[] = {0.35, 0.475, 0.25, 1.0};
     glClearBufferfv(GL_COLOR, 0, bgColor);
@@ -49,6 +55,8 @@ int main() {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        handleInput(window);
     }
 
     glfwDestroyWindow(window);
