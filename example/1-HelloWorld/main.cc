@@ -45,8 +45,11 @@ int main() {
         fatal("glad load gl error");
     }
 
-    info("OpenGL %s, GLSL %s", glGetString(GL_VERSION),
-         glGetString(GL_SHADING_LANGUAGE_VERSION));
+    info("GLFW: %s", glfwGetVersionString());
+    info("Vendor: %s", glGetString(GL_VENDOR));
+    info("Renderer: %s", glGetString(GL_RENDERER));
+    info("Version: %s", glGetString(GL_VERSION));
+    info("GLSL: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     init();
 
