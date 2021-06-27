@@ -34,8 +34,8 @@ static bool createShader(GLenum type, const char *filename, GLuint *shader) {
         GLsizei len;
         glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &len);
 
-        GLchar *log = new GLchar[len + 1];
-        glGetShaderInfoLog(*shader, len, &len, log);
+        GLchar *log = new GLchar[len];
+        glGetShaderInfoLog(*shader, len, nullptr, log);
         error("shader compiled error: %s", log);
         delete[] log;
 
@@ -45,25 +45,26 @@ static bool createShader(GLenum type, const char *filename, GLuint *shader) {
     return true;
 }
 
-bool createProgram(const char *vertFilename, const char *fragFilename,
-                   GLuint *prog) {
+Shader::~Shader() {}
+
+bool Shader::createProgram(const char *vertFilename, const char *fragFilename) {
     GLuint vert, frag;
     assert(createShader(GL_VERTEX_SHADER, vertFilename, &vert));
     assert(createShader(GL_FRAGMENT_SHADER, fragFilename, &frag));
 
-    *prog = glCreateProgram();
+    _program = glCreateProgram();
 
-    glAttachShader(*prog, vert);
-    glAttachShader(*prog, frag);
+    glAttachShader(_program, vert);
+    glAttachShader(_program, frag);
 
-    glLinkProgram(*prog);
+    glLinkProgram(_program);
     GLint status;
-    if (glGetProgramiv(*prog, GL_LINK_STATUS, &status); status != GL_TRUE) {
+    if (glGetProgramiv(_program, GL_LINK_STATUS, &status); status != GL_TRUE) {
         GLsizei len;
-        glGetProgramiv(*prog, GL_INFO_LOG_LENGTH, &len);
+        glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &len);
 
-        GLchar *log = new GLchar[len + 1];
-        glGetProgramInfoLog(*prog, len, &len, log);
+        GLchar *log = new GLchar[len];
+        glGetProgramInfoLog(_program, len, nullptr, log);
         error("program linked error: %s", log);
         delete[] log;
 
@@ -74,4 +75,18 @@ bool createProgram(const char *vertFilename, const char *fragFilename,
     glDeleteShader(frag);
 
     return true;
+}
+
+void Shader::deleteProgram() { glDeleteProgram(_program); }
+
+void Shader::use() { glUseProgram(_program); }
+
+void Shader::unuse() { glUseProgram(0); }
+
+GLuint Shader::operator[](const char *attr) {
+    return glGetAttribLocation(_program, attr);
+}
+
+GLuint Shader::operator()(const char *uniform) {
+    return glGetUniformLocation(_program, uniform);
 }
