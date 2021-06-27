@@ -9,6 +9,7 @@ static const char *GREEN = "\033[0;32m";
 static const char *YELLOW = "\033[0;33m";
 static const char *RED = "\033[0;31m";
 static const char *PURPLE = "\033[0;35m";
+static const char *GREY = "\033[0;90m";
 static const char *NC = "\033[0m"; // no color
 
 static std::string datestr() {
@@ -49,8 +50,8 @@ void log(const char *file, unsigned int line, const char *func, char level,
         level = 'D';
     }
 
-    fprintf(stdout, "%s %s%c%s %s:%d#%s ", datestr().c_str(), color, level, NC,
-            file, line, func);
+    fprintf(stdout, "%s %s%c %s%s:%d#%s%s ", datestr().c_str(), color, level,
+            GREY, file, line, func, NC);
 
     va_list args;
     va_start(args, format);
