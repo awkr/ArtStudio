@@ -5,7 +5,8 @@
 class Shader {
   public:
     ~Shader();
-    bool createProgram(const char *vertFilename, const char *fragFilename);
+    bool createProgram(const char *vertFilename, const char *fragFilename,
+                       const char *geomFilename = nullptr);
     void deleteProgram();
     void use();
     void unuse();

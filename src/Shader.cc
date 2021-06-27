@@ -47,7 +47,8 @@ static bool createShader(GLenum type, const char *filename, GLuint *shader) {
 
 Shader::~Shader() {}
 
-bool Shader::createProgram(const char *vertFilename, const char *fragFilename) {
+bool Shader::createProgram(const char *vertFilename, const char *fragFilename,
+                           const char *geomFilename) {
     GLuint vert, frag;
     assert(createShader(GL_VERTEX_SHADER, vertFilename, &vert));
     assert(createShader(GL_FRAGMENT_SHADER, fragFilename, &frag));
@@ -56,6 +57,12 @@ bool Shader::createProgram(const char *vertFilename, const char *fragFilename) {
 
     glAttachShader(_program, vert);
     glAttachShader(_program, frag);
+
+    if (geomFilename) {
+        GLuint geom;
+        assert(createShader(GL_GEOMETRY_SHADER, geomFilename, &geom));
+        glAttachShader(_program, geom);
+    }
 
     glLinkProgram(_program);
     GLint status;
