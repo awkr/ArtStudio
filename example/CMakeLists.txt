@@ -1,5 +1,6 @@
 set(EXAMPLES
     1-HelloWorld
+    2-RippleDeformer
 )
 
 function(buildExamples)
