@@ -1,10 +1,16 @@
-set(EXAMPLES
-    1-HelloWorld
-    2-RippleDeformer
-    3-SubdivisionGeometry
-)
+MACRO(LS_SUB_DIR result curdir)
+  FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
+  SET(dirlist "")
+  FOREACH(child ${children})
+    IF(IS_DIRECTORY ${curdir}/${child})
+      LIST(APPEND dirlist ${child})
+    ENDIF()
+  ENDFOREACH()
+  SET(${result} ${dirlist})
+ENDMACRO()
 
 function(buildExamples)
+    LS_SUB_DIR(EXAMPLES ${CMAKE_CURRENT_LIST_DIR})
     foreach(EXAMPLE ${EXAMPLES})
         message(STATUS "building example: ${EXAMPLE}")
         add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/${EXAMPLE}/main.cc)
