@@ -11,6 +11,9 @@ class Shader {
     void use();
     void unuse();
 
+    GLuint getAttribLocation(const char *name);
+    GLuint getUniformLocation(const char *name);
+
     // an indexer that returns the location of the attibute / uniform
     GLuint operator[](const char *attr);
     GLuint operator()(const char *uniform);
