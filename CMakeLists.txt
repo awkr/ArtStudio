@@ -10,9 +10,4 @@ add_subdirectory(vendor/glfw-3.3.4)
 
 add_subdirectory(src)
 
-include_directories(
-    vendor/glm
-    vendor/glfw-3.3.4/include
-)
-
 add_subdirectory(example)

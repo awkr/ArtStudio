@@ -90,6 +90,14 @@ void Shader::use() { glUseProgram(_program); }
 
 void Shader::unuse() { glUseProgram(0); }
 
+GLuint Shader::getAttribLocation(const char *name) {
+    return glGetAttribLocation(_program, name);
+}
+
+GLuint Shader::getUniformLocation(const char *name) {
+    return glGetUniformLocation(_program, name);
+}
+
 GLuint Shader::operator[](const char *attr) {
     return glGetAttribLocation(_program, attr);
 }
