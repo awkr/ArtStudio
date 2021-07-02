@@ -3,18 +3,20 @@
 #include <fstream>
 #include <sstream>
 
-static const GLchar *readShader(const char *filename) {
-    FILE *fp = fopen(filename, "rb");
-    assert(fp);
+static const GLchar *readFile(const char *filename) {
+    FILE *f = fopen(filename, "rb");
+    if (!f) {
+        fatal("read file error: %s", filename);
+    }
 
-    fseek(fp, 0, SEEK_END); // seek to end
-    auto len = ftell(fp);
+    fseek(f, 0, SEEK_END); // seek to end
+    auto len = ftell(f);
 
-    fseek(fp, 0, SEEK_SET); // seek to start
+    fseek(f, 0, SEEK_SET); // seek to start
     GLchar *source = new GLchar[len + 1];
-    fread(source, 1, len, fp);
+    fread(source, 1, len, f);
 
-    fclose(fp);
+    fclose(f);
 
     source[len] = 0;
     return const_cast<const GLchar *>(source);
@@ -23,7 +25,7 @@ static const GLchar *readShader(const char *filename) {
 static bool createShader(GLenum type, const char *filename, GLuint *shader) {
     *shader = glCreateShader(type);
 
-    auto source = readShader(filename);
+    auto source = readFile(filename);
     glShaderSource(*shader, 1, &source, nullptr);
     delete[] source;
 
@@ -96,6 +98,19 @@ GLuint Shader::getAttribLocation(const char *name) {
 
 GLuint Shader::getUniformLocation(const char *name) {
     return glGetUniformLocation(_program, name);
+}
+
+void Shader::setUniform1i(const char *name, int v) {
+    glUniform1i(getUniformLocation(name), v);
+}
+
+void Shader::setUniform4fv(const char *name, GLsizei n, const GLfloat *v) {
+    glUniform4fv(getUniformLocation(name), n, v);
+}
+
+void Shader::setUniformMat4fv(const char *name, GLsizei n, GLboolean transpose,
+                              const GLfloat *v) {
+    glUniformMatrix4fv(getUniformLocation(name), n, transpose, v);
 }
 
 GLuint Shader::operator[](const char *attr) {

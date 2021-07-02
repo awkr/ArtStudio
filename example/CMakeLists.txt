@@ -13,12 +13,19 @@ function(buildExamples)
     LS_SUB_DIR(EXAMPLES ${CMAKE_CURRENT_LIST_DIR})
     foreach(EXAMPLE ${EXAMPLES})
         message(STATUS "building example: ${EXAMPLE}")
+
         add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/${EXAMPLE}/main.cc)
         target_include_directories(${EXAMPLE} PRIVATE
           ${PROJECT_SOURCE_DIR}/vendor/glfw-3.3.4/include)
         target_link_libraries(${EXAMPLE} PRIVATE base glfw)
+
+        set_target_properties(${EXAMPLE}
+            PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${EXAMPLE}"
+        )
+
         # 'copy' shaders to corresponding build directory
-        file(GLOB_RECURSE shaders *.vert *.frag *.geom)
+        file(GLOB_RECURSE shaders ${EXAMPLE}/*.vert ${EXAMPLE}/*.frag ${EXAMPLE}/*.geom)
         set(dest_dir "$<TARGET_FILE_DIR:${EXAMPLE}>")
         foreach(shader ${shaders})
             get_filename_component(filename ${shader} NAME)
