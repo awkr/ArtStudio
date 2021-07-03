@@ -219,8 +219,6 @@ glm::vec4 cubeColors[3] = {glm::vec4(1, 0, 0, 0.35), glm::vec4(0, 1, 0, 0.35),
 
 // render normally
 void drawCubes(const glm::mat4 &MVP, Shader &shader) {
-    glEnable(GL_DEPTH_TEST);
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -270,6 +268,7 @@ void renderFrontPeeling(const glm::mat4 &MVP) {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glEnable(GL_DEPTH_TEST);
         drawCubes(MVP, shaderCube);
 
         // 2 depth peeling + blending
@@ -327,6 +326,7 @@ void renderFrontPeeling(const glm::mat4 &MVP) {
 
         GL_CHECK_ERROR
     } else {
+        glEnable(GL_DEPTH_TEST);
         drawCubes(MVP, shaderCube);
     }
 }
