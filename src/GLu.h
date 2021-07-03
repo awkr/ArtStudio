@@ -2,4 +2,8 @@
 
 // OpenGL utility
 
-#define GL_CHECK_ERROR assert(glGetError() == GL_NO_ERROR);
+#define GL_CHECK_ERROR                                                         \
+    {                                                                          \
+        if (GLenum err = glGetError(); err)                                    \
+            fatal("GL error: %x", err);                                        \
+    }

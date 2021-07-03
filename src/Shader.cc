@@ -158,6 +158,10 @@ void Shader::setUniform1i(const char *name, int v) {
     glUniform1i(getUniformLocation(name), v);
 }
 
+void Shader::setUniform1f(const char *name, GLfloat v) {
+    glUniform1f(getUniformLocation(name), v);
+}
+
 void Shader::setUniform4fv(const char *name, GLsizei n, const GLfloat *v) {
     glUniform4fv(getUniformLocation(name), n, v);
 }

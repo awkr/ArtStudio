@@ -25,6 +25,7 @@ class Shader {
     GLuint getUniformLocation(const char *name);
 
     void setUniform1i(const char *name, int v);
+    void setUniform1f(const char *name, GLfloat v);
     void setUniform4fv(const char *name, GLsizei n, const GLfloat *v);
     void setUniformMat4fv(const char *name, GLsizei n, GLboolean transpose,
                           const GLfloat *v);
