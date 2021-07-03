@@ -47,7 +47,21 @@ static bool createShader(GLenum type, const char *filename, GLuint *shader) {
     return true;
 }
 
-Shader::~Shader() {}
+Shader::Shader() : _program(0) {}
+
+Shader::~Shader() { destory(); }
+
+void Shader::destory() {
+    for (unsigned i = 0; i < _vertexShaders.size(); ++i) {
+        glDeleteShader(_vertexShaders[i]);
+    }
+    for (unsigned i = 0; i < _fragmentShaders.size(); ++i) {
+        glDeleteShader(_fragmentShaders[i]);
+    }
+    if (_program != 0) {
+        glDeleteProgram(_program);
+    }
+}
 
 bool Shader::createProgram(const char *vertFilename, const char *fragFilename,
                            const char *geomFilename) {
@@ -86,6 +100,46 @@ bool Shader::createProgram(const char *vertFilename, const char *fragFilename,
     return true;
 }
 
+void Shader::attachVertexShader(const char *filename) {
+    GLuint id;
+    assert(createShader(GL_VERTEX_SHADER, filename, &id));
+    _vertexShaders.push_back(id);
+}
+
+void Shader::attachFragmentShader(const char *filename) {
+    GLuint id;
+    assert(createShader(GL_FRAGMENT_SHADER, filename, &id));
+    _fragmentShaders.push_back(id);
+}
+
+bool Shader::link() {
+    _program = glCreateProgram();
+
+    for (unsigned i = 0; i < _vertexShaders.size(); ++i) {
+        glAttachShader(_program, _vertexShaders[i]);
+    }
+    for (unsigned i = 0; i < _fragmentShaders.size(); ++i) {
+        glAttachShader(_program, _fragmentShaders[i]);
+    }
+
+    glLinkProgram(_program);
+
+    GLint status;
+    if (glGetProgramiv(_program, GL_LINK_STATUS, &status); status != GL_TRUE) {
+        GLsizei len;
+        glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &len);
+
+        GLchar *log = new GLchar[len];
+        glGetProgramInfoLog(_program, len, nullptr, log);
+        error("program link error: %s", log);
+        delete[] log;
+
+        return false;
+    }
+
+    return true;
+}
+
 void Shader::deleteProgram() { glDeleteProgram(_program); }
 
 void Shader::use() { glUseProgram(_program); }
@@ -111,6 +165,13 @@ void Shader::setUniform4fv(const char *name, GLsizei n, const GLfloat *v) {
 void Shader::setUniformMat4fv(const char *name, GLsizei n, GLboolean transpose,
                               const GLfloat *v) {
     glUniformMatrix4fv(getUniformLocation(name), n, transpose, v);
+}
+
+void Shader::setTextureRect(const char *name, GLuint texid, int texunit) {
+    glActiveTexture(GL_TEXTURE0 + texunit);
+    glBindTexture(GL_TEXTURE_RECTANGLE, texid);
+    setUniform1i(name, texunit);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 GLuint Shader::operator[](const char *attr) {
