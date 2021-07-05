@@ -14,7 +14,10 @@ function(buildExamples)
     foreach(EXAMPLE ${EXAMPLES})
         message(STATUS "building example: ${EXAMPLE}")
 
-        add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/${EXAMPLE}/main.cc)
+        file(GLOB_RECURSE headers ${CMAKE_CURRENT_LIST_DIR}/${EXAMPLE}/*.h)
+        file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/${EXAMPLE}/*.cc)
+        add_executable(${EXAMPLE} ${headers} ${sources})
+
         target_include_directories(${EXAMPLE} PRIVATE
           ${PROJECT_SOURCE_DIR}/vendor/glfw-3.3.4/include)
         target_link_libraries(${EXAMPLE} PRIVATE base glfw)
