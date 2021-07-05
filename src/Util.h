@@ -9,7 +9,17 @@
 
 namespace as {
 
-GLfloat lerp(GLfloat a, GLfloat b, GLfloat f) { return a + f * (b - a); }
+template <typename T> inline T lerp(T a, T b, float f) {
+    return a + (b - a) * f;
+}
+
+template <typename T, typename U, typename V>
+inline T clamp(T val, U low, V high) {
+    return val < low ? low : (val > height ? height : val);
+}
+
+// is power-of-2
+template <typename T> inline bool isPOT(T v) { return v && !(v & (v - 1)); }
 
 template <typename... Args>
 std::string stringf(const char *format, Args... args) {
