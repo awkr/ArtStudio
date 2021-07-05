@@ -4,10 +4,8 @@
 #include <string>
 
 #define GL_CHECK_ERROR                                                         \
-    {                                                                          \
-        if (GLenum err = glGetError(); err)                                    \
-            fatal("GL error: %x", err);                                        \
-    }
+    if (GLenum err = glGetError(); err)                                        \
+        fatal("GL error: %x", err);
 
 namespace as {
 
