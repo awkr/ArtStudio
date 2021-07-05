@@ -2,10 +2,9 @@
 
 #include <GLFW/glfw3.h> // must included after glad
 
-#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <GLu.h>
+#include <Camera.h>
 #include <Log.h>
 #include <Shader.h>
 #include <Util.h>
@@ -24,27 +23,18 @@ enum State { NONE, LEFT_PRESS, RIGHT_PRESS, SCROLL }; // cursor operation state
 State state = NONE;
 // end
 
-// Camera movement
-float fovy = 60.0f; // vertical FOV in degree
-float nearPlane = 1.0f;
-float farPlane = 100.0f;
-float cameraAngleX = 0;  // pitch in degree
-float cameraAngleY = 45; // yaw in degree
-float cameraDistance = -10;
-
+// Camera
+Camera camera(-10, 60, (float)WIDTH / HEIGHT, 1, 100, 0, 45);
 glm::mat4 MV = glm::mat4(1);
-glm::mat4 P = glm::perspective(glm::radians(fovy), (GLfloat)WIDTH / HEIGHT,
-                               nearPlane, farPlane);
 
 void rotateCamera(const double x, const double y) {
-    cameraAngleY += (x - cursorX);
-    cameraAngleX += (y - cursorY);
+    camera.rotate(x - cursorX, y - cursorY);
     cursorX = x;
     cursorY = y;
 }
 
 void zoomCamera(const double y) {
-    cameraDistance -= (y - cursorY) * 0.1f;
+    camera.zoom((y - cursorY) * 0.1f);
     cursorY = y;
 }
 // end
@@ -332,13 +322,7 @@ void renderFrontPeeling(const glm::mat4 &MVP) {
 }
 
 void render() {
-    glm::mat4 T =
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, cameraDistance));
-    glm::mat4 R =
-        glm::rotate(T, glm::radians(cameraAngleX), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::mat4 MV =
-        glm::rotate(R, glm::radians(cameraAngleY), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 MVP = P * MV;
+    glm::mat4 MVP = camera.getP() * camera.getV() * glm::mat4(1.0f);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
