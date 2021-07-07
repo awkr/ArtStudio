@@ -15,6 +15,11 @@ Camera::Camera(float distance, float fovy, float aspect, float near, float far,
 
 Camera::~Camera() {}
 
+glm::vec3 Camera::getPosition() {
+    auto v = glm::vec3(0, 0, _distance);
+    return v;
+}
+
 glm::mat4 Camera::getV() const {
     auto T = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, _distance));
     auto RxT =
