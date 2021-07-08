@@ -1,45 +1,49 @@
 #pragma once
 
-#include "mathematics.h"
+#include <glm/glm.hpp>
 
 class Camera {
   public:
-    Camera(const vec3 &position, const vec3 &target = vec3());
+    Camera(const glm::vec3 &position, const glm::vec3 &target = glm::vec3(.0f));
     ~Camera();
 
-    inline vec3 getPosition() const { return _position; }
-    inline mat4 getV() const { return _V; };
-    inline mat4 getP() const { return _P; }
+    inline glm::vec3 getPosition() const { return _position; }
+    inline glm::mat4 getV() const { return _V; };
+    inline glm::mat4 getP() const { return _P; }
 
     // move along the camera's axis
-    void move(const vec3 &offsets);
+    void move(const glm::vec3 &offset);
 
     // rotate around camera's axis
     void pitch(const float angle);
     void yaw(const float angle);
     void roll(const float angle);
 
-    void rotate(const vec3 &angles);
-
-    void setFrustum(float fovy, float aspect, float near, float far);
-
-    void reset();
+    void rotate(const glm::vec3 &angles);
 
   private:
-    void setFrustum(float left, float right, float bottom, float top,
-                    float near, float far);
+    void updateView();
+    void updateProjection();
 
-    void update_view_mats();
+    glm::vec3 _position;
+    glm::mat4 _rotation;
 
-    vec3 _position;
-    quaternion _quat;
+    // axis
+    glm::vec3 _right;
+    glm::vec3 _up;
+    glm::vec3 _forward;
 
-    // 视锥体
+    // angles in degree
+    float _pitch;
+    float _yaw;
+    float _roll;
+
+    // forstum
     float _fovy = 60.0;        // vertical FOV in degree
     float _aspect = 8.0 / 5.0; // classical 16:10
     float _near = 1.0;
     float _far = 100.0;
 
-    mat4 _V; // view matrix
-    mat4 _P; // projection matrix
+    glm::mat4 _V; // view matrix
+    glm::mat4 _P; // projection matrix
 };

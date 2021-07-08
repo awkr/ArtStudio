@@ -30,7 +30,7 @@ State state = NONE;
 
 Grid *grid;
 Cube *cube;
-Camera camera(vec3(0, 5.0f, 10.0f));
+Camera camera(glm::vec3(0, 3.0f, 10.0f));
 
 #define SHADER_PATH "Shaders/"
 
@@ -44,33 +44,30 @@ void init() {
 
     glEnable(GL_DEPTH_TEST);
 
-    std::cout << camera.getV() << std::endl;
-    std::cout << camera.getP() << std::endl;
+    // {
+    //     auto some_mat4 = glm::mat4(1, 0, 0, 0, //
+    //                                0, 1, 7, 0, //
+    //                                0, 8, 1, 0, //
+    //                                1, 2, 3, 4  //
+    //     );
+    //     debug("some mat4 %s", glm::to_string(some_mat4).c_str());
 
-    {
-        auto some_mat4 = glm::mat4(1, 0, 0, 0, //
-                                   0, 1, 7, 0, //
-                                   0, 8, 1, 0, //
-                                   1, 2, 3, 4  //
-        );
-        debug("some mat4 %s", glm::to_string(some_mat4).c_str());
+    //     auto V = glm::translate(glm::mat4(1.0f), -glm::vec3(0, 20, 10));
+    //     debug("V %s", glm::to_string(V).c_str());
 
-        auto V = glm::translate(glm::mat4(1.0f), -glm::vec3(0, 20, 10));
-        debug("V %s", glm::to_string(V).c_str());
-
-        auto P =
-            glm::perspective(glm::radians(60.0f), 8.0f / 5.0f, 1.0f, 100.0f);
-        debug("P %s", glm::to_string(P).c_str());
-    }
+    //     auto P =
+    //         glm::perspective(glm::radians(60.0f), 8.0f / 5.0f, 1.0f, 100.0f);
+    //     debug("P %s", glm::to_string(P).c_str());
+    // }
 }
 
 void render() {
-    mat4 MVP = camera.getP() * camera.getV() * mat4();
+    glm::mat4 MVP = camera.getP() * camera.getV() * glm::mat4(1.0f);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    grid->render(MVP.m);
-    cube->render(MVP.m);
+    grid->render(glm::value_ptr(MVP));
+    cube->render(glm::value_ptr(MVP));
 }
 
 // GLFW callbacks
@@ -87,19 +84,19 @@ void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action,
         if (key == GLFW_KEY_ESCAPE) {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         } else if (key == GLFW_KEY_SPACE) {
-            camera.reset();
+
         } else if (key == GLFW_KEY_A) {
-            camera.move(vec3(-1, 0, 0));
+            camera.move(glm::vec3(-1, 0, 0));
         } else if (key == GLFW_KEY_D) {
-            camera.move(vec3(1, 0, 0));
+            camera.move(glm::vec3(1, 0, 0));
         } else if (key == GLFW_KEY_W) {
-            camera.move(vec3(0, 0, -1));
+            camera.move(glm::vec3(0, 0, -1));
         } else if (key == GLFW_KEY_S) {
-            camera.move(vec3(0, 0, 1));
+            camera.move(glm::vec3(0, 0, 1));
         } else if (key == GLFW_KEY_Q) {
-            camera.move(vec3(0, 1, 0));
+            camera.move(glm::vec3(0, 1, 0));
         } else if (key == GLFW_KEY_E) {
-            camera.move(vec3(0, -1, 0));
+            camera.move(glm::vec3(0, -1, 0));
         } else if (key == GLFW_KEY_Z) {
             camera.roll(15);
         } else if (key == GLFW_KEY_C) {
@@ -109,9 +106,9 @@ void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action,
         } else if (key == GLFW_KEY_DOWN) {
             camera.pitch(-15);
         } else if (key == GLFW_KEY_LEFT) {
-            camera.yaw(-15);
-        } else if (key == GLFW_KEY_RIGHT) {
             camera.yaw(15);
+        } else if (key == GLFW_KEY_RIGHT) {
+            camera.yaw(-15);
         }
     }
 }
@@ -159,6 +156,7 @@ void glfwMouseButtonCallback(GLFWwindow *window, int button, int action,
 
 void glfwScrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
     state = SCROLL;
+    camera.rotate(glm::vec3(0.0f));
 }
 
 int main(int argc, char **argv) {

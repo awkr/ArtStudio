@@ -1,72 +1,68 @@
 #include "Camera.h"
 #include "Util.h"
+#include <glm/gtc/quaternion.hpp>
 
-Camera::Camera(const vec3 &position, const vec3 &target) : _position(position) {
-    _quat.set(1, 0, 0, 0);
+Camera::Camera(const glm::vec3 &position, const glm::vec3 &target)
+    : _position(position) {
+    glm::vec3 forward = glm::normalize(target - position);
+    glm::vec3 up(0, 1, 0);
+    glm::vec3 right = glm::normalize(glm::cross(forward, up));
+    up = glm::cross(right, forward); // re-compute up vector
 
-    update_view_mats();
+    auto q = glm::quatLookAt(forward, up);
+    auto angle = glm::degrees(glm::eulerAngles(q));
+    _pitch = angle.x;
+    _yaw = angle.y;
+    _roll = angle.z;
 
-    setFrustum(60, 8.0 / 5.0, 1, 100);
+    updateView();
+    updateProjection();
 }
 
 Camera::~Camera() {}
 
-void Camera::move(const vec3 &offsets) {
-    _position += _quat.to_mat4() * offsets;
+void Camera::move(const glm::vec3 &offset) {
+    _position += glm::vec3(_rotation * glm::vec4(offset, 0.0f));
 
-    update_view_mats();
+    updateView();
 }
 
 void Camera::pitch(const float angle) {
-    // the angle is for camera, so shoule be negated for computation
-    auto q = quaternion::make(vec3(angle, 0, 0));
-    _quat = q * _quat;
-
-    update_view_mats();
+    _pitch += angle;
+    updateView();
 }
 
-void Camera::yaw(const float angle) {}
+void Camera::yaw(const float angle) {
+    _yaw += angle;
+    updateView();
+}
 
 void Camera::roll(const float angle) {
-    auto q = quaternion::make(vec3(0, 0, angle));
-    _quat = q * _quat;
-
-    update_view_mats();
+    _roll += angle;
+    updateView();
 }
 
-void Camera::rotate(const vec3 &angles) {}
+void Camera::rotate(const glm::vec3 &angles) { debug("rotating"); }
 
-void Camera::setFrustum(float fovy, float aspect, float near, float far) {
-    float tangent = tanf(deg2rad(fovy) * 0.5); // tangent of half fovy
-    float height = near * tangent;             // half height of near plane
-    float width = height * aspect;             // half width of near plane
-    setFrustum(-width, width, -height, height, near, far);
+void Camera::updateProjection() {
+    _P = glm::perspective(glm::radians(_fovy), _aspect, _near, _far);
 }
 
-void Camera::reset() {
-    _quat.set(1, 0, 0, 0);
-    _position = vec3(0, 5, 10);
-    update_view_mats();
-    setFrustum(60, 8.0 / 5.0, 1, 100);
-}
+void Camera::updateView() {
+    glm::quat pitch = glm::angleAxis(glm::radians(_pitch), glm::vec3(1, 0, 0));
+    glm::quat yaw = glm::angleAxis(glm::radians(_yaw), glm::vec3(0, 1, 0));
+    glm::quat roll = glm::angleAxis(glm::radians(_roll), glm::vec3(0, 0, 1));
 
-// column-major
-void Camera::setFrustum(float left, float right, float bottom, float top,
-                        float near, float far) {
-    auto proj = mat4();
-    proj[0] = 2 * near / (right - left);
-    proj[5] = 2 * near / (top - bottom);
-    proj[2] = (right + left) / (right - left);
-    proj[6] = (top + bottom) / (top - bottom);
-    proj[10] = -(far + near) / (far - near);
-    proj[14] = -1;
-    proj[11] = -(2 * far * near) / (far - near);
-    proj[15] = 0;
-    _P = proj;
-}
+    auto orientation = glm::normalize(roll * yaw * pitch);
+    _rotation = glm::mat4_cast(orientation);
 
-void Camera::update_view_mats() {
-    auto R = _quat.inverse().to_mat4();
-    auto T = mat4().translate(-_position);
-    _V = R * T;
+    glm::mat4 translate = glm::translate(glm::mat4(1.0f), _position);
+
+    // update axis
+    _forward = glm::vec3(_rotation * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
+    _up = glm::vec3(_rotation * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
+    _right = glm::vec3(_rotation * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
+
+    // update view matrix
+    _V = glm::inverse(_rotation) * glm::inverse(translate);
 }
