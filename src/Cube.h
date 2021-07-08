@@ -2,10 +2,10 @@
 
 #include "RenderableObject.h"
 
-class UnitCube : public RenderableObject {
+class Cube : public RenderableObject {
   public:
-    UnitCube();
-    virtual ~UnitCube();
+    Cube();
+    ~Cube();
 
     int getNumVertices() override;
     int getNumIndices() override;

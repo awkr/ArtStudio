@@ -1,11 +1,11 @@
 #include "Grid.h"
 #include <glm/glm.hpp>
 
-Grid::Grid(int width, int depth) {
-    _width = width;
-    _depth = depth;
-
-    _shader.createProgram("shaders/Common.vert", "shaders/Common.frag");
+Grid::Grid(int width, int depth) : _width(width), _depth(depth) {
+    _shader.init();
+    _shader.attachVertexShader("Shaders/Common.vert");
+    _shader.attachFragmentShader("Shaders/Common.frag");
+    assert(_shader.link());
 
     init();
 }

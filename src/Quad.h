@@ -6,7 +6,7 @@
 class Quad : public RenderableObject {
   public:
     Quad(float zpos = 0);
-    virtual ~Quad();
+    ~Quad();
 
     int getNumVertices() override;
     int getNumIndices() override;
