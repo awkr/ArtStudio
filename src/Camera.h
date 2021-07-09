@@ -10,11 +10,11 @@ enum CameraAnchor { CAMERA, TARGET };
 
 class Camera {
   public:
-    Camera(const glm::vec3 &position, const glm::vec3 &target = glm::vec3(.0f));
+    Camera(const glm::vec3 &position);
     ~Camera();
 
     inline glm::vec3 getPosition() const { return _position; }
-    inline glm::mat4 getV() const { return _V; };
+    glm::mat4 getV();
     inline glm::mat4 getP() const { return _P; }
 
     // move along the camera's axis
@@ -25,10 +25,12 @@ class Camera {
     void yaw(const float angle);
     void roll(const float angle);
 
+    void rotate(const double xoffset, const double yoffset);
     void rotate(const glm::vec3 &angles);
     void rotateBy(const glm::vec3 &target, const glm::vec3 &offset);
 
     void lookAt(const glm::vec3 &target = glm::vec3(0.0f));
+    void setAspect(const float aspect);
 
   private:
     void lookAt(const glm::vec3 &target, const glm::vec3 &up);

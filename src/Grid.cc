@@ -1,7 +1,8 @@
 #include "Grid.h"
-#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-Grid::Grid(int width, int depth) : _width(width), _depth(depth) {
+Grid::Grid(int width, int depth, const glm::vec4 &color)
+    : _width(width), _depth(depth), RenderableObject(color) {
     _shader.init();
     _shader.attachVertexShader("Shaders/Common.vert");
     _shader.attachFragmentShader("Shaders/Common.frag");
@@ -12,13 +13,13 @@ Grid::Grid(int width, int depth) : _width(width), _depth(depth) {
 
 Grid::~Grid() {}
 
-int Grid::getNumVertices() { return ((_width + 1) + (_depth + 1)) * 2; }
+int Grid::getVerticesCount() { return ((_width + 1) + (_depth + 1)) * 2; }
 
-int Grid::getNumIndices() { return _width * _depth; }
+int Grid::getIndicesCount() { return _width * _depth; }
 
 GLenum Grid::getPrimitiveType() { return GL_LINES; }
 
-void Grid::fillVertexBuffer(GLfloat *buf) {
+void Grid::initVertices(GLfloat *buf) {
     auto vertices = (glm::vec3 *)buf;
 
     int hw = _width / 2;
@@ -34,7 +35,7 @@ void Grid::fillVertexBuffer(GLfloat *buf) {
     }
 }
 
-void Grid::fillIndexBuffer(GLuint *buf) {
+void Grid::initIndices(GLuint *buf) {
     GLuint *id = buf;
     for (int i = 0; i < _width * _depth; i += 4) {
         *id++ = i;

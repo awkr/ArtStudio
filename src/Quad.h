@@ -8,14 +8,14 @@ class Quad : public RenderableObject {
     Quad(float zpos = 0);
     ~Quad();
 
-    int getNumVertices() override;
-    int getNumIndices() override;
+    int getVerticesCount() override;
+    int getIndicesCount() override;
     GLenum getPrimitiveType() override;
     inline glm::vec3 getPosition() const { return _position; }
     inline glm::vec3 getNormal() const { return _normal; }
 
-    void fillVertexBuffer(GLfloat *buf) override;
-    void fillIndexBuffer(GLuint *buf) override;
+    void initVertices(GLfloat *buf) override;
+    void initIndices(GLuint *buf) override;
 
   private:
     float _zpos;

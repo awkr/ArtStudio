@@ -11,7 +11,7 @@ ENDMACRO()
 
 function(buildExamples)
     # LS_SUB_DIR(EXAMPLES ${CMAKE_CURRENT_LIST_DIR})
-    set(EXAMPLES RefineCamera)
+    set(EXAMPLES camera-v2)
 
     foreach(EXAMPLE ${EXAMPLES})
         message(STATUS "building example: ${EXAMPLE}")

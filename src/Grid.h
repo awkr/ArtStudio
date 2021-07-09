@@ -4,15 +4,16 @@
 
 class Grid : public RenderableObject {
   public:
-    Grid(int width = 10, int depth = 10);
+    Grid(int width = 10, int depth = 10,
+         const glm::vec4 &color = glm::vec4(0.7, 0.7, 0.7, 1));
     virtual ~Grid();
 
-    int getNumVertices() override;
-    int getNumIndices() override;
+    int getVerticesCount() override;
+    int getIndicesCount() override;
     GLenum getPrimitiveType() override;
 
-    void fillVertexBuffer(GLfloat *buf) override;
-    void fillIndexBuffer(GLuint *buf) override;
+    void initVertices(GLfloat *buf) override;
+    void initIndices(GLuint *buf) override;
 
   private:
     int _width, _depth;

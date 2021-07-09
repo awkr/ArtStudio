@@ -4,13 +4,13 @@
 
 class Cube : public RenderableObject {
   public:
-    Cube();
+    Cube(const glm::vec4 &color = glm::vec4(1, 0, 0, 1));
     ~Cube();
 
-    int getNumVertices() override;
-    int getNumIndices() override;
+    int getVerticesCount() override;
+    int getIndicesCount() override;
     GLenum getPrimitiveType() override;
 
-    void fillVertexBuffer(GLfloat *buf) override;
-    void fillIndexBuffer(GLuint *buf) override;
+    void initVertices(GLfloat *buf) override;
+    void initIndices(GLuint *buf) override;
 };

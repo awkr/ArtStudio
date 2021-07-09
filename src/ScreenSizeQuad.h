@@ -7,10 +7,10 @@ class ScreenSizeQuad : public RenderableObject {
     ScreenSizeQuad();
     virtual ~ScreenSizeQuad();
 
-    int getNumVertices() override;
-    int getNumIndices() override;
+    int getVerticesCount() override;
+    int getIndicesCount() override;
     GLenum getPrimitiveType() override;
 
-    void fillVertexBuffer(GLfloat *buf) override;
-    void fillIndexBuffer(GLuint *buf) override;
+    void initVertices(GLfloat *buf) override;
+    void initIndices(GLuint *buf) override;
 };
