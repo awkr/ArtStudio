@@ -4,26 +4,14 @@
 
 Camera::Camera(const glm::vec3 &position, const glm::vec3 &target)
     : _position(position) {
-    glm::vec3 forward = glm::normalize(target - position);
-    glm::vec3 up(0, 1, 0);
-    glm::vec3 right = glm::normalize(glm::cross(forward, up));
-    up = glm::cross(right, forward); // re-compute up vector
-
-    auto q = glm::quatLookAt(forward, up);
-    auto angle = glm::degrees(glm::eulerAngles(q));
-    _pitch = angle.x;
-    _yaw = angle.y;
-    _roll = angle.z;
-
-    updateView();
+    lookAt(target, glm::vec3(0, 1, 0));
     updateProjection();
 }
 
 Camera::~Camera() {}
 
 void Camera::move(const glm::vec3 &offset) {
-    _position += glm::vec3(_rotation * glm::vec4(offset, 0.0f));
-
+    _position += glm::vec3(_rotation * glm::vec4(offset * _moveSpeed, 0.0f));
     updateView();
 }
 
@@ -42,10 +30,54 @@ void Camera::roll(const float angle) {
     updateView();
 }
 
-void Camera::rotate(const glm::vec3 &angles) { debug("rotating"); }
+void Camera::rotate(const glm::vec3 &angles) {
+    _pitch += angles.x * _rotateSpeed;
+    _yaw += angles.y * _rotateSpeed;
+    updateView();
+}
 
-void Camera::updateProjection() {
-    _P = glm::perspective(glm::radians(_fovy), _aspect, _near, _far);
+void Camera::rotateBy(const glm::vec3 &target, const glm::vec3 &offset) {
+    _forward = glm::normalize(target - _position);
+    _right = glm::normalize(glm::cross(_forward, glm::vec3(0, 1, 0)));
+    _up = glm::cross(_right, _forward);
+
+    auto q = glm::quatLookAt(_forward, _up);
+    _rotation = glm::mat4_cast(q);
+
+    debug("pos %s, offset %s", as::to_string(_position).c_str(),
+          as::to_string(offset).c_str());
+
+    _position += glm::vec3(_rotation * glm::vec4(offset * _moveSpeed, 0.0f));
+
+    auto angle = glm::degrees(glm::eulerAngles(q));
+    _pitch = angle.x;
+    _yaw = angle.y;
+    _roll = angle.z;
+
+    // updateView();
+
+    {
+        glm::mat4 translate = glm::translate(glm::mat4(1.0f), _position);
+
+        // update view matrix
+        _V = glm::inverse(_rotation) * glm::inverse(translate);
+    }
+}
+
+void Camera::lookAt(const glm::vec3 &target) { lookAt(target, _up); }
+
+void Camera::lookAt(const glm::vec3 &target, const glm::vec3 &up) {
+    glm::vec3 forward = glm::normalize(target - _position);
+    glm::vec3 right = glm::normalize(glm::cross(forward, up));
+    glm::vec3 y = glm::cross(right, forward);
+
+    auto q = glm::quatLookAt(forward, y);
+    auto angle = glm::degrees(glm::eulerAngles(q));
+    _pitch = angle.x;
+    _yaw = angle.y;
+    _roll = angle.z;
+
+    updateView();
 }
 
 void Camera::updateView() {
@@ -65,4 +97,8 @@ void Camera::updateView() {
 
     // update view matrix
     _V = glm::inverse(_rotation) * glm::inverse(translate);
+}
+
+void Camera::updateProjection() {
+    _P = glm::perspective(glm::radians(_fovy), _aspect, _near, _far);
 }

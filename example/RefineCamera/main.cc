@@ -86,17 +86,17 @@ void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action,
         } else if (key == GLFW_KEY_SPACE) {
 
         } else if (key == GLFW_KEY_A) {
-            camera.move(glm::vec3(-1, 0, 0));
+            camera.move(glm::vec3(-20, 0, 0));
         } else if (key == GLFW_KEY_D) {
-            camera.move(glm::vec3(1, 0, 0));
+            camera.move(glm::vec3(20, 0, 0));
         } else if (key == GLFW_KEY_W) {
-            camera.move(glm::vec3(0, 0, -1));
+            camera.move(glm::vec3(0, 0, -20));
         } else if (key == GLFW_KEY_S) {
-            camera.move(glm::vec3(0, 0, 1));
+            camera.move(glm::vec3(0, 0, 20));
         } else if (key == GLFW_KEY_Q) {
-            camera.move(glm::vec3(0, 1, 0));
+            camera.move(glm::vec3(0, 20, 0));
         } else if (key == GLFW_KEY_E) {
-            camera.move(glm::vec3(0, -1, 0));
+            camera.move(glm::vec3(0, -20, 0));
         } else if (key == GLFW_KEY_Z) {
             camera.roll(15);
         } else if (key == GLFW_KEY_C) {
@@ -109,6 +109,8 @@ void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action,
             camera.yaw(15);
         } else if (key == GLFW_KEY_RIGHT) {
             camera.yaw(-15);
+        } else if (key == GLFW_KEY_F) {
+            camera.lookAt();
         }
     }
 }
@@ -122,6 +124,9 @@ void glfwCursorPosCallback(GLFWwindow *window, double x, double y) {
     case LEFT_PRESS: // left mouse dragged
         break;
     case RIGHT_PRESS: // right mouse dragged
+        camera.move(glm::vec3(-(x - cursorX), 0, -(y - cursorY)));
+        cursorX = x;
+        cursorY = y;
         break;
     case SCROLL:
         break;
@@ -156,27 +161,14 @@ void glfwMouseButtonCallback(GLFWwindow *window, int button, int action,
 
 void glfwScrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
     state = SCROLL;
-    camera.rotate(glm::vec3(0.0f));
+    // camera.rotate(glm::vec3(yoffset, xoffset, 0));
+
+    // todo get world space position of screen center
+    glm::vec3 target = glm::vec3(0);
+    camera.rotateBy(target, glm::vec3(xoffset, yoffset, 0));
 }
 
 int main(int argc, char **argv) {
-    // {
-    //     auto q = quaternion::make(vec3(10, 20, 30));
-    //     std::cout << q << std::endl;
-    // }
-
-    {
-        auto q1 = glm::angleAxis(glm::radians(10.0f), glm::vec3(1, 0, 0));
-        auto q2 = glm::angleAxis(glm::radians(20.0f), glm::vec3(0, 1, 0));
-        auto q3 = glm::angleAxis(glm::radians(30.0f), glm::vec3(0, 0, 1));
-        debug("%s", glm::to_string(q3 * q2 * q1).c_str());
-
-        {
-            auto q = glm::quat(glm::radians(glm::vec3(10, 20, 30)));
-            debug("%s", glm::to_string(q).c_str());
-        }
-    }
-
     if (!glfwInit()) {
         fatal("glfw init error");
     }

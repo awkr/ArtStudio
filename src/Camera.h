@@ -1,6 +1,12 @@
 #pragma once
 
+// 交互设计：
+// 1 光标控制：锚点为物体
+// 2 键盘控制：锚点为相机
+
 #include <glm/glm.hpp>
+
+enum CameraAnchor { CAMERA, TARGET };
 
 class Camera {
   public:
@@ -20,8 +26,12 @@ class Camera {
     void roll(const float angle);
 
     void rotate(const glm::vec3 &angles);
+    void rotateBy(const glm::vec3 &target, const glm::vec3 &offset);
+
+    void lookAt(const glm::vec3 &target = glm::vec3(0.0f));
 
   private:
+    void lookAt(const glm::vec3 &target, const glm::vec3 &up);
     void updateView();
     void updateProjection();
 
@@ -46,4 +56,9 @@ class Camera {
 
     glm::mat4 _V; // view matrix
     glm::mat4 _P; // projection matrix
+
+    // controls how fast the rotation is.
+    // mainly used for the rotation controlled by the cursor.
+    float _rotateSpeed = 0.75f;
+    float _moveSpeed = 0.04f;
 };
