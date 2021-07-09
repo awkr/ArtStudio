@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-enum CameraAnchor { CAMERA, TARGET };
+enum CameraViewType { CAMERA, THIRD_PERSON };
 
 class Camera {
   public:
@@ -25,12 +25,22 @@ class Camera {
     void yaw(const float angle);
     void roll(const float angle);
 
-    void rotate(const double xoffset, const double yoffset);
     void rotate(const glm::vec3 &angles);
     void rotateBy(const glm::vec3 &target, const glm::vec3 &offset);
 
-    void lookAt(const glm::vec3 &target = glm::vec3(0.0f));
+    //
+
+    void rotate(const double xoffset, const double yoffset);
+
+    void pan(const double xoffset, const double yoffset);
+    void zoom(const double yoffset);
+
+    void setViewType(const CameraViewType t);
     void setAspect(const float aspect);
+
+    //
+
+    void lookAt(const glm::vec3 &target = glm::vec3(0.0f));
 
   private:
     void lookAt(const glm::vec3 &target, const glm::vec3 &up);
@@ -63,4 +73,6 @@ class Camera {
     // mainly used for the rotation controlled by the cursor.
     float _rotateSpeed = 0.75f;
     float _moveSpeed = 0.04f;
+
+    CameraViewType _viewType = CAMERA;
 };

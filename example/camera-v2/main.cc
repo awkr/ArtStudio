@@ -12,7 +12,6 @@
 #include <Log.h>
 #include <Shader.h>
 #include <Util.h>
-#include <mathematics.h>
 
 // 基础框架代码
 const char *TITLE = "ArtStudio";
@@ -29,8 +28,8 @@ State state = NONE;
 // end
 
 // cameras
-Camera camera(glm::vec3(0, 3, 5));
-Camera worldCamera(glm::vec3(0, 10, 10));
+Camera camera(glm::vec3(0, 2, 5));
+Camera worldCamera(glm::vec3(0, 4, 20));
 
 // scene objects
 Grid *grid;
@@ -41,6 +40,8 @@ Cube *cube;
 void buildShaders() {}
 
 void init() {
+    worldCamera.setViewType(THIRD_PERSON);
+
     grid = new Grid();
     cube = new Cube();
 
@@ -88,17 +89,17 @@ void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action,
         } else if (key == GLFW_KEY_SPACE) {
 
         } else if (key == GLFW_KEY_A) {
-            camera.move(glm::vec3(-20, 0, 0));
+            camera.move(glm::vec3(-1, 0, 0));
         } else if (key == GLFW_KEY_D) {
-            camera.move(glm::vec3(20, 0, 0));
+            camera.move(glm::vec3(1, 0, 0));
         } else if (key == GLFW_KEY_W) {
-            camera.move(glm::vec3(0, 0, -20));
+            camera.move(glm::vec3(0, 0, -1));
         } else if (key == GLFW_KEY_S) {
-            camera.move(glm::vec3(0, 0, 20));
+            camera.move(glm::vec3(0, 0, 1));
         } else if (key == GLFW_KEY_Q) {
-            camera.move(glm::vec3(0, 20, 0));
+            camera.move(glm::vec3(0, 1, 0));
         } else if (key == GLFW_KEY_E) {
-            camera.move(glm::vec3(0, -20, 0));
+            camera.move(glm::vec3(0, -1, 0));
         } else if (key == GLFW_KEY_Z) {
             camera.roll(15);
         } else if (key == GLFW_KEY_C) {
@@ -124,14 +125,12 @@ void glfwCursorEnterCallback(GLFWwindow *window, int entered) {
 void glfwCursorPosCallback(GLFWwindow *window, double x, double y) {
     switch (state) {
     case LEFT_PRESS: // left mouse dragged
-        worldCamera.rotate(x - cursorX, y - cursorY);
-        cursorX = x;
-        cursorY = y;
+        worldCamera.rotate(-(x - cursorX), -(y - cursorY));
+        cursorX = x, cursorY = y;
         break;
     case RIGHT_PRESS: // right mouse dragged
-        // camera.move(glm::vec3(-(x - cursorX), 0, -(y - cursorY)));
-        // cursorX = x;
-        // cursorY = y;
+        worldCamera.pan(-(x - cursorX), y - cursorY);
+        cursorX = x, cursorY = y;
         break;
     case SCROLL:
         break;
@@ -166,6 +165,7 @@ void glfwMouseButtonCallback(GLFWwindow *window, int button, int action,
 
 void glfwScrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
     state = SCROLL;
+    worldCamera.zoom(yoffset);
     // camera.rotate(glm::vec3(yoffset, xoffset, 0));
 
     // // todo get world space position of screen center
@@ -205,6 +205,8 @@ int main(int argc, char **argv) {
     }
 
     glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
+
+    // todo scissor
 
     auto width = framebufferWidth / 2.0f;
     auto aspect = width / framebufferHeight;
