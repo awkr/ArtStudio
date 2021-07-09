@@ -112,18 +112,22 @@ Shader shaderBlend;
 Shader shaderFinal;
 
 void buildShaders() {
+    shaderCube.init();
     shaderCube.attachVertexShader(SHADER_PATH "cube.vert");
     shaderCube.attachFragmentShader(SHADER_PATH "cube.frag");
     assert(shaderCube.link());
 
+    shaderPeel.init();
     shaderPeel.attachVertexShader(SHADER_PATH "peel.vert");
     shaderPeel.attachFragmentShader(SHADER_PATH "peel.frag");
     assert(shaderPeel.link());
 
+    shaderBlend.init();
     shaderBlend.attachVertexShader(SHADER_PATH "blend.vert");
     shaderBlend.attachFragmentShader(SHADER_PATH "blend.frag");
     assert(shaderBlend.link());
 
+    shaderFinal.init();
     shaderFinal.attachVertexShader(SHADER_PATH "final.vert");
     shaderFinal.attachFragmentShader(SHADER_PATH "final.frag");
     assert(shaderFinal.link());
@@ -220,9 +224,8 @@ void drawCubes(const glm::mat4 &MVP, Shader &shader) {
             for (int i = -1; i <= 1; ++i) { // X-axis
                 glm::mat4 T = glm::translate(glm::mat4(1),
                                              glm::vec3(i * 2, j * 2, k * 2));
-                shader.setUniform4fv("color", 1, &(cubeColors[index++].x));
-                shader.setUniformMat4fv("MVP", 1, GL_FALSE,
-                                        glm::value_ptr(MVP * T));
+                shader.setUniform4fv("color", &(cubeColors[index++].x));
+                shader.setUniformMat4fv("MVP", glm::value_ptr(MVP * T));
                 glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
             }
         }
@@ -309,7 +312,7 @@ void renderFrontPeeling(const glm::mat4 &MVP) {
         glDisable(GL_DEPTH_TEST);
 
         shaderFinal.use();
-        shaderFinal.setUniform4fv("backgroundColor", 1, &backgroundColor.x);
+        shaderFinal.setUniform4fv("backgroundColor", &backgroundColor.x);
         shaderFinal.setTextureRect("colorTex", colorBlenderTexId, 0);
         drawFullScreenQuad();
         shaderFinal.unuse();
