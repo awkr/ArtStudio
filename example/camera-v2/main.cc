@@ -54,8 +54,12 @@ void init() {
 void drawScene(const glm::mat4 &VP) {
     glm::mat4 MVP = VP * glm::mat4(1.0f);
 
-    axis->render(glm::value_ptr(MVP));
     grid->render(glm::value_ptr(MVP));
+
+    glDepthFunc(GL_ALWAYS); // avoid visual artifacts with grid lines
+    axis->render(glm::value_ptr(MVP));
+    glDepthFunc(GL_LEQUAL); // restore default settings
+
     cube->render(glm::value_ptr(MVP));
 }
 
