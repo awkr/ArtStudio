@@ -56,21 +56,33 @@ void drawScene(const glm::mat4 &VP) {
 }
 
 void render() {
-    glEnable(GL_DEPTH_TEST);
-
-    glClearColor(0.1, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //
+    // prepare data
     auto width = framebufferWidth / 2.0f;
 
-    //
+    // setup OpenGL
+    glEnable(GL_SCISSOR_TEST);
+    glEnable(GL_DEPTH_TEST);
+
+    // draw in camera view
+    glScissor(0, 0, width, framebufferHeight);
+
+    glClearColor(0.2, 0.3, 0.4, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glViewport(0, 0, width, framebufferHeight);
     drawScene(camera.getP() * camera.getV());
 
-    //
+    // draw in editor view
+    glScissor(width, 0, width, framebufferHeight);
+
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glViewport(width, 0, width, framebufferHeight);
     drawScene(worldCamera.getP() * worldCamera.getV());
+
+    // clean up
+    glDisable(GL_SCISSOR_TEST);
 }
 
 // GLFW callbacks
