@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <Axis.h>
 #include <Camera.h>
 #include <Cube.h>
 #include <Grid.h>
@@ -32,6 +33,7 @@ Camera camera(glm::vec3(0, 8, 10));
 Camera worldCamera(glm::vec3(0, 8, 10));
 
 // scene objects
+Axis *axis;
 Grid *grid;
 Cube *cube;
 
@@ -42,6 +44,7 @@ void buildShaders() {}
 void init() {
     worldCamera.setViewType(THIRD_PERSON);
 
+    axis = new Axis();
     grid = new Grid();
     cube = new Cube();
 
@@ -51,6 +54,7 @@ void init() {
 void drawScene(const glm::mat4 &VP) {
     glm::mat4 MVP = VP * glm::mat4(1.0f);
 
+    axis->render(glm::value_ptr(MVP));
     grid->render(glm::value_ptr(MVP));
     cube->render(glm::value_ptr(MVP));
 }
