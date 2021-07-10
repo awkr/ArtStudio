@@ -1,49 +1,103 @@
 #include "Camera.h"
 #include "Util.h"
-#include <glm/gtc/quaternion.hpp>
 
-Camera::Camera(const glm::vec3 &position) : _position(position) {
+Camera::Camera(const glm::vec3 &position, const glm::vec3 &target)
+    : _position(position) {
+    auto forward = glm::normalize(target - position);
+    auto up = glm::vec3(0, 1, 0);
+    auto right = glm::normalize(glm::cross(forward, up));
+    up = glm::cross(right, forward);
+
+    _rotation = glm::quatLookAt(forward, up);
+
     updateProjection();
 }
 
 Camera::~Camera() {}
 
 glm::mat4 Camera::getV() {
-    auto translation = glm::translate(glm::mat4(1), _position);
-
-    auto quat = glm::quat(glm::radians(glm::vec3(_pitch, _yaw, _roll)));
-    auto rotation = glm::mat4_cast(quat);
-
-    if (_viewType == CAMERA) { // 第一人称？？？
-        return glm::inverse(rotation) * glm::inverse(translation);
-    }
-
-    return glm::inverse(rotation * translation);
+    updateView();
+    return _V;
 }
 
 void Camera::move(const glm::vec3 &offset) {
-    auto quat = glm::quat(glm::radians(glm::vec3(_pitch, _yaw, _roll)));
-    auto rotation = glm::mat4_cast(quat);
-    _position += glm::vec3(rotation * glm::vec4(offset, 0));
+    _position += glm::vec3(_rotation * glm::vec4(offset, 0));
 }
 
-void Camera::pitch(const float angle) { _pitch += angle; }
+void Camera::pitch(const float angle) {
+    if (_viewType == CAMERA) {
+        // calc new orientation
+        auto right = _rotation * glm::vec3(1, 0, 0);
+        glm::quat q = glm::angleAxis(glm::radians(angle), right);
+        _rotation = q * _rotation;
+    } else {
+        // calc new position
+        glm::quat q = glm::angleAxis(glm::radians(angle), glm::vec3(1, 0, 0));
+        _position = q * _position;
 
-void Camera::yaw(const float angle) { _yaw += angle; }
+        // calc new orientation
+        _rotation = q * _rotation;
+    }
+}
 
-void Camera::roll(const float angle) { _roll += angle; }
+void Camera::yaw(const float angle) {
+    if (_viewType == CAMERA) {
+        // calc new orientation
+        auto up = _rotation * glm::vec3(0, 1, 0);
+        glm::quat q = glm::angleAxis(glm::radians(angle), up);
+        _rotation = q * _rotation;
+    } else {
+        // calc new position
+        glm::quat q = glm::angleAxis(glm::radians(angle), glm::vec3(0, 1, 0));
+        _position = q * _position;
+
+        // calc new orientation
+        _rotation = q * _rotation;
+    }
+}
+
+void Camera::roll(const float angle) {
+    if (_viewType == CAMERA) {
+        // calc new orientation
+        auto forward = _rotation * glm::vec3(0, 0, 1);
+        glm::quat q = glm::angleAxis(glm::radians(angle), forward);
+        _rotation = q * _rotation;
+    } else {
+        // calc new position
+        glm::quat q = glm::angleAxis(glm::radians(angle), glm::vec3(0, 0, 1));
+        _position = q * _position;
+
+        // calc new orientation
+        _rotation = q * _rotation;
+    }
+}
 
 void Camera::rotate(const double xoffset, const double yoffset) {
-    _yaw += xoffset;
-    _pitch += yoffset;
+    if (_viewType == CAMERA) {
+        // todo
+    } else {
+        // calc new position
+        auto up = glm::vec3(0, 1, 0);
+        auto right = _rotation * glm::vec3(1, 0, 0);
+
+        glm::quat qy = glm::angleAxis(glm::radians(float(xoffset)), up);
+        glm::quat qx = glm::angleAxis(glm::radians(float(yoffset)), right);
+
+        auto q = glm::normalize(qy * qx);
+
+        _position = q * _position;
+
+        // calc new orientation
+        _rotation = q * _rotation;
+    }
 }
 
 void Camera::pan(const double xoffset, const double yoffset) {
-    _position += glm::vec3(xoffset, yoffset, 0) * 0.1f;
+    _position += _rotation * (glm::vec3(xoffset, yoffset, 0) * 0.1f);
 }
 
 void Camera::zoom(const double yoffset) {
-    _position += glm::vec3(0, 0, yoffset) * 0.1f;
+    _position += _rotation * (glm::vec3(0, 0, yoffset) * 0.1f);
 }
 
 void Camera::setViewType(const CameraViewType t) { _viewType = t; }
@@ -53,73 +107,12 @@ void Camera::setAspect(const float aspect) {
     updateProjection();
 }
 
-void Camera::rotate(const glm::vec3 &angles) {
-    _pitch += angles.x * _rotateSpeed;
-    _yaw += angles.y * _rotateSpeed;
-    updateView();
-}
-
-void Camera::rotateBy(const glm::vec3 &target, const glm::vec3 &offset) {
-    _forward = glm::normalize(target - _position);
-    _right = glm::normalize(glm::cross(_forward, glm::vec3(0, 1, 0)));
-    _up = glm::cross(_right, _forward);
-
-    auto q = glm::quatLookAt(_forward, _up);
-    _rotation = glm::mat4_cast(q);
-
-    debug("pos %s, offset %s", as::to_string(_position).c_str(),
-          as::to_string(offset).c_str());
-
-    _position += glm::vec3(_rotation * glm::vec4(offset * _moveSpeed, 0.0f));
-
-    auto angle = glm::degrees(glm::eulerAngles(q));
-    _pitch = angle.x;
-    _yaw = angle.y;
-    _roll = angle.z;
-
-    // updateView();
-
-    {
-        glm::mat4 translate = glm::translate(glm::mat4(1.0f), _position);
-
-        // update view matrix
-        _V = glm::inverse(_rotation) * glm::inverse(translate);
-    }
-}
-
-void Camera::lookAt(const glm::vec3 &target) { lookAt(target, _up); }
-
-void Camera::lookAt(const glm::vec3 &target, const glm::vec3 &up) {
-    glm::vec3 forward = glm::normalize(target - _position);
-    glm::vec3 right = glm::normalize(glm::cross(forward, up));
-    glm::vec3 y = glm::cross(right, forward);
-
-    auto q = glm::quatLookAt(forward, y);
-    auto angle = glm::degrees(glm::eulerAngles(q));
-    _pitch = angle.x;
-    _yaw = angle.y;
-    _roll = angle.z;
-
-    updateView();
-}
+void Camera::rotate(const glm::vec3 &angles) {}
 
 void Camera::updateView() {
-    glm::quat pitch = glm::angleAxis(glm::radians(_pitch), glm::vec3(1, 0, 0));
-    glm::quat yaw = glm::angleAxis(glm::radians(_yaw), glm::vec3(0, 1, 0));
-    glm::quat roll = glm::angleAxis(glm::radians(_roll), glm::vec3(0, 0, 1));
-
-    auto orientation = glm::normalize(roll * yaw * pitch);
-    _rotation = glm::mat4_cast(orientation);
-
-    glm::mat4 translate = glm::translate(glm::mat4(1.0f), _position);
-
-    // update axis
-    _forward = glm::vec3(_rotation * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-    _up = glm::vec3(_rotation * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-    _right = glm::vec3(_rotation * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-
-    // update view matrix
-    _V = glm::inverse(_rotation) * glm::inverse(translate);
+    auto translation = glm::translate(glm::mat4(1), _position);
+    auto rotation = glm::mat4_cast(_rotation);
+    _V = glm::inverse(rotation) * glm::inverse(translation);
 }
 
 void Camera::updateProjection() {

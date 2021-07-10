@@ -28,8 +28,8 @@ State state = NONE;
 // end
 
 // cameras
-Camera camera(glm::vec3(0, 2, 5));
-Camera worldCamera(glm::vec3(0, 4, 20));
+Camera camera(glm::vec3(0, 8, 10));
+Camera worldCamera(glm::vec3(0, 8, 10));
 
 // scene objects
 Grid *grid;
@@ -113,7 +113,6 @@ void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action,
         } else if (key == GLFW_KEY_RIGHT) {
             camera.yaw(-15);
         } else if (key == GLFW_KEY_F) {
-            camera.lookAt();
         }
     }
 }
