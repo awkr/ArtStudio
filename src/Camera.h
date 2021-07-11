@@ -34,15 +34,21 @@ class Camera {
     void pan(const double xoffset, const double yoffset);
     void zoom(const double yoffset);
 
+    void reset();
+
     void setViewType(const CameraViewType t);
     void setAspect(const float aspect);
 
   private:
+    void lookAt(const glm::vec3 &target);
+
     void updateView();
     void updateProjection();
 
+    glm::vec3 _initPosition;
     glm::vec3 _position;
     glm::quat _rotation;
+    glm::vec3 _target;
 
     // forstum
     float _fovy = 60.0;        // vertical FOV in degree

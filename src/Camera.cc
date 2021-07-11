@@ -2,15 +2,8 @@
 #include "Util.h"
 
 Camera::Camera(const glm::vec3 &position, const glm::vec3 &target)
-    : _position(position) {
-    auto forward = glm::normalize(target - position);
-    auto up = glm::vec3(0, 1, 0);
-    auto right = glm::normalize(glm::cross(forward, up));
-    up = glm::cross(right, forward);
-
-    _rotation = glm::quatLookAt(forward, up);
-
-    updateProjection();
+    : _initPosition(position), _position(position) {
+    lookAt(target);
 }
 
 Camera::~Camera() {}
@@ -100,6 +93,12 @@ void Camera::zoom(const double yoffset) {
     _position += _rotation * (glm::vec3(0, 0, yoffset) * 0.1f);
 }
 
+void Camera::reset() {
+    _position = _initPosition;
+
+    lookAt(_target);
+}
+
 void Camera::setViewType(const CameraViewType t) { _viewType = t; }
 
 void Camera::setAspect(const float aspect) {
@@ -108,6 +107,19 @@ void Camera::setAspect(const float aspect) {
 }
 
 void Camera::rotate(const glm::vec3 &angles) {}
+
+void Camera::lookAt(const glm::vec3 &target) {
+    _target = target;
+
+    auto forward = glm::normalize(target - _position);
+    auto up = glm::vec3(0, 1, 0);
+    auto right = glm::normalize(glm::cross(forward, up));
+    up = glm::cross(right, forward);
+
+    _rotation = glm::quatLookAt(forward, up);
+
+    updateProjection();
+}
 
 void Camera::updateView() {
     auto translation = glm::translate(glm::mat4(1), _position);

@@ -133,6 +133,7 @@ void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action,
         } else if (key == GLFW_KEY_RIGHT) {
             camera.yaw(-15);
         } else if (key == GLFW_KEY_F) {
+            worldCamera.reset();
         }
     }
 }
