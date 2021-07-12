@@ -42,6 +42,8 @@ Cube *cube;
 void buildShaders() {}
 
 void init() {
+    glEnable(GL_MULTISAMPLE);
+
     worldCamera.setViewType(THIRD_PERSON);
 
     axis = new Axis();
@@ -204,6 +206,8 @@ int main(int argc, char **argv) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     if (window = glfwCreateWindow(WIDTH, HEIGHT, TITLE, nullptr, nullptr);
         !window) {
