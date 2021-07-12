@@ -1,23 +1,25 @@
-#include "UnitCube.h"
-#include <glm/glm.hpp>
+#include "Cube.h"
 
-UnitCube::UnitCube() {
-    _shader.createProgram("shaders/UnitCube.vert", "shaders/UnitCube.frag");
+Cube::Cube(const glm::vec4 &color) : RenderableObject(color) {
+    _shader.init();
+    _shader.attachVertexShader("Shaders/Cube.vert");
+    _shader.attachFragmentShader("Shaders/Cube.frag");
+    assert(_shader.link());
 
     init();
 }
 
-UnitCube::~UnitCube() {}
+Cube::~Cube() {}
 
-int UnitCube::getNumVertices() { return 8; }
+int Cube::getVerticesCount() { return 8; }
 
-int UnitCube::getNumIndices() {
+int Cube::getIndicesCount() {
     return 6 * 2 * 3; // 6 faces with 2 triangles each with 3 vertices
 }
 
-GLenum UnitCube::getPrimitiveType() { return GL_TRIANGLES; }
+GLenum Cube::getPrimitiveType() { return GL_TRIANGLES; }
 
-void UnitCube::fillVertexBuffer(GLfloat *buf) {
+void Cube::initVertices(GLfloat *buf) {
     auto vertices = (glm::vec3 *)buf;
     vertices[0] = glm::vec3(-0.5, -0.5, -0.5);
     vertices[1] = glm::vec3(0.5, -0.5, -0.5);
@@ -29,7 +31,7 @@ void UnitCube::fillVertexBuffer(GLfloat *buf) {
     vertices[7] = glm::vec3(-0.5, 0.5, 0.5);
 }
 
-void UnitCube::fillIndexBuffer(GLuint *buf) {
+void Cube::initIndices(GLuint *buf) {
     GLuint *id = buf;
 
     // bottom face

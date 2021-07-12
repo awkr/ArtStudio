@@ -14,13 +14,13 @@ Quad::Quad(float zpos) {
 
 Quad::~Quad() {}
 
-int Quad::getNumVertices() { return 4; }
+int Quad::getVerticesCount() { return 4; }
 
-int Quad::getNumIndices() { return 6; /* 2 * 3 */ }
+int Quad::getIndicesCount() { return 6; /* 2 * 3 */ }
 
 GLenum Quad::getPrimitiveType() { return GL_TRIANGLES; }
 
-void Quad::fillVertexBuffer(GLfloat *buf) {
+void Quad::initVertices(GLfloat *buf) {
     auto vertices = (glm::vec3 *)buf;
     vertices[0] = glm::vec3(-1, 0, _zpos);
     vertices[1] = glm::vec3(1, 0, _zpos);
@@ -37,7 +37,7 @@ void Quad::fillVertexBuffer(GLfloat *buf) {
     _normal = glm::cross(v1, v2);
 }
 
-void Quad::fillIndexBuffer(GLuint *buf) {
+void Quad::initIndices(GLuint *buf) {
     GLuint *id = buf;
 
     *id++ = 0;

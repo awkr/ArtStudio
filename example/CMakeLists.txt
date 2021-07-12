@@ -10,7 +10,9 @@ MACRO(LS_SUB_DIR result curdir)
 ENDMACRO()
 
 function(buildExamples)
-    LS_SUB_DIR(EXAMPLES ${CMAKE_CURRENT_LIST_DIR})
+    # LS_SUB_DIR(EXAMPLES ${CMAKE_CURRENT_LIST_DIR})
+    set(EXAMPLES Camera)
+
     foreach(EXAMPLE ${EXAMPLES})
         message(STATUS "building example: ${EXAMPLE}")
 

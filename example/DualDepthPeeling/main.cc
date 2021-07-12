@@ -223,11 +223,11 @@ void initCubes() {
     glBindVertexArray(0);
 }
 
-GLuint fullScreenQuadVaoId;
-GLuint fullScreenQuadVboId;
-GLuint fullScreenQuadIndicesId;
+GLuint quadVaoId;
+GLuint quadVboId;
+GLuint quadIndicesId;
 
-void initFullScreenQuad() {
+void initQuad() {
     glm::vec2 vertices[4];
     vertices[0] = glm::vec2(0, 0);
     vertices[1] = glm::vec2(1, 0);
@@ -236,19 +236,19 @@ void initFullScreenQuad() {
 
     GLushort indices[] = {0, 1, 2, 0, 2, 3};
 
-    glGenVertexArrays(1, &fullScreenQuadVaoId);
-    glGenBuffers(1, &fullScreenQuadVboId);
-    glGenBuffers(1, &fullScreenQuadIndicesId);
+    glGenVertexArrays(1, &quadVaoId);
+    glGenBuffers(1, &quadVboId);
+    glGenBuffers(1, &quadIndicesId);
 
-    glBindVertexArray(fullScreenQuadVaoId);
-    glBindBuffer(GL_ARRAY_BUFFER, fullScreenQuadVboId);
+    glBindVertexArray(quadVaoId);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVboId);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0],
                  GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fullScreenQuadIndicesId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIndicesId);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0],
                  GL_STATIC_DRAW);
 
@@ -259,7 +259,7 @@ void init() {
     initDualPeelingRenderTargets();
     buildShaders();
     initCubes();
-    initFullScreenQuad();
+    initQuad();
 }
 
 glm::vec4 cubeColors[3] = {glm::vec4(1, 0, 0, 0.35), glm::vec4(0, 1, 0, 0.35),
@@ -297,7 +297,7 @@ void drawCubes(const glm::mat4 &MVP, Shader &shader, bool useColor = false,
 }
 
 void drawFullScreenQuad() {
-    glBindVertexArray(fullScreenQuadVaoId);
+    glBindVertexArray(quadVaoId);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 }
 
@@ -373,8 +373,8 @@ void renderFrontPeeling(const glm::mat4 &MVP) {
             glBlendEquation(GL_MAX);
 
             shaderPeel.use();
-            shaderPeel.setTextureRect("depthBlenderTex", depthTexId[prevId], 0);
-            shaderPeel.setTextureRect("frontBlenderTex", texId[prevId], 1);
+            shaderPeel.setTextureRect("depthBlenderTex", 0, depthTexId[prevId]);
+            shaderPeel.setTextureRect("frontBlenderTex", 1, texId[prevId]);
             drawCubes(MVP, shaderPeel, true, true);
             shaderPeel.unuse();
 
@@ -387,7 +387,7 @@ void renderFrontPeeling(const glm::mat4 &MVP) {
 
             // use blending shader and draw a fullscreen quad
             shaderBlend.use();
-            shaderBlend.setTextureRect("tempTex", backTexId[currId], 0);
+            shaderBlend.setTextureRect("tempTex", 0, backTexId[currId]);
             drawFullScreenQuad();
             shaderBlend.unuse();
 
@@ -401,9 +401,9 @@ void renderFrontPeeling(const glm::mat4 &MVP) {
         glDrawBuffer(GL_BACK_LEFT);
 
         shaderFinal.use();
-        shaderFinal.setTextureRect("depthBlenderTex", depthTexId[currId], 0);
-        shaderFinal.setTextureRect("frontBlenderTex", texId[currId], 1);
-        shaderFinal.setTextureRect("backBlenderTex", colorBlenderTexId, 2);
+        shaderFinal.setTextureRect("depthBlenderTex", 0, depthTexId[currId]);
+        shaderFinal.setTextureRect("frontBlenderTex", 1, texId[currId]);
+        shaderFinal.setTextureRect("backBlenderTex", 2, colorBlenderTexId);
         drawFullScreenQuad();
         shaderFinal.unuse();
     } else {

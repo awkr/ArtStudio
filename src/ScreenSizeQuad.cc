@@ -16,11 +16,11 @@ ScreenSizeQuad::ScreenSizeQuad() {
     glBindVertexArray(_vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    glBufferData(GL_ARRAY_BUFFER, getNumVertices() * sizeof(glm::vec2), 0,
+    glBufferData(GL_ARRAY_BUFFER, getVerticesCount() * sizeof(glm::vec2), 0,
                  GL_STATIC_DRAW);
     auto fbuf =
         static_cast<GLfloat *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-    fillVertexBuffer(fbuf);
+    initVertices(fbuf);
     glUnmapBuffer(GL_ARRAY_BUFFER);
 
     auto loc = _shader.getAttribLocation("vertex");
@@ -28,11 +28,11 @@ ScreenSizeQuad::ScreenSizeQuad() {
     glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eab);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, getNumIndices() * sizeof(GLuint), 0,
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, getIndicesCount() * sizeof(GLuint), 0,
                  GL_STATIC_DRAW);
     auto ibuf = static_cast<GLuint *>(
         glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
-    fillIndexBuffer(ibuf);
+    initIndices(ibuf);
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
     glBindVertexArray(0);
@@ -40,13 +40,13 @@ ScreenSizeQuad::ScreenSizeQuad() {
 
 ScreenSizeQuad::~ScreenSizeQuad() {}
 
-int ScreenSizeQuad::getNumVertices() { return 4; }
+int ScreenSizeQuad::getVerticesCount() { return 4; }
 
-int ScreenSizeQuad::getNumIndices() { return 6; }
+int ScreenSizeQuad::getIndicesCount() { return 6; }
 
 GLenum ScreenSizeQuad::getPrimitiveType() { return GL_TRIANGLES; }
 
-void ScreenSizeQuad::fillVertexBuffer(GLfloat *buf) {
+void ScreenSizeQuad::initVertices(GLfloat *buf) {
     auto vertices = (glm::vec2 *)buf;
     vertices[0] = glm::vec2(-1, -1);
     vertices[1] = glm::vec2(1, -1);
@@ -54,7 +54,7 @@ void ScreenSizeQuad::fillVertexBuffer(GLfloat *buf) {
     vertices[3] = glm::vec2(-1, 1);
 }
 
-void ScreenSizeQuad::fillIndexBuffer(GLuint *buf) {
+void ScreenSizeQuad::initIndices(GLuint *buf) {
     GLuint *id = buf;
 
     *id++ = 0;

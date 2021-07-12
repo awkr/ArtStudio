@@ -1,11 +1,9 @@
 #include "RenderableObject.h"
-#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-RenderableObject::RenderableObject() {}
+RenderableObject::RenderableObject(const glm::vec4 &color) : _color(color) {}
 
-RenderableObject::~RenderableObject() { destory(); }
-
-void RenderableObject::destory() {
+RenderableObject::~RenderableObject() {
     _shader.deleteProgram();
 
     glDeleteBuffers(1, &_eab);
@@ -21,11 +19,11 @@ void RenderableObject::init() {
     glBindVertexArray(_vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    glBufferData(GL_ARRAY_BUFFER, getNumVertices() * sizeof(glm::vec3), 0,
+    glBufferData(GL_ARRAY_BUFFER, getVerticesCount() * sizeof(glm::vec3), 0,
                  GL_STATIC_DRAW);
     auto fbuf =
         static_cast<GLfloat *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-    fillVertexBuffer(fbuf);
+    initVertices(fbuf);
     glUnmapBuffer(GL_ARRAY_BUFFER);
 
     auto loc = _shader.getAttribLocation("vertex");
@@ -33,11 +31,11 @@ void RenderableObject::init() {
     glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eab);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, getNumIndices() * sizeof(GLuint), 0,
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, getIndicesCount() * sizeof(GLuint), 0,
                  GL_STATIC_DRAW);
     auto ibuf = static_cast<GLuint *>(
         glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
-    fillIndexBuffer(ibuf);
+    initIndices(ibuf);
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
     glBindVertexArray(0);
@@ -46,10 +44,11 @@ void RenderableObject::init() {
 void RenderableObject::render(const float *MVP) {
     _shader.use();
     if (MVP) {
-        glUniformMatrix4fv(_shader.getUniformLocation("MVP"), 1, GL_FALSE, MVP);
+        _shader.setUniformMat4fv("MVP", MVP);
     }
+    _shader.setUniform4fv("color", glm::value_ptr(_color));
     glBindVertexArray(_vao);
-    glDrawElements(getPrimitiveType(), getNumIndices(), GL_UNSIGNED_INT, 0);
+    glDrawElements(getPrimitiveType(), getIndicesCount(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     _shader.unuse();
 }

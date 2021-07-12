@@ -2,10 +2,10 @@
 
 #include "RenderableObject.h"
 
-class ScreenSizeQuad : public RenderableObject {
+class Cube : public RenderableObject {
   public:
-    ScreenSizeQuad();
-    virtual ~ScreenSizeQuad();
+    Cube(const glm::vec4 &color = glm::vec4(1, 0, 0, 1));
+    ~Cube();
 
     int getVerticesCount() override;
     int getIndicesCount() override;

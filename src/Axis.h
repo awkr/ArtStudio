@@ -2,10 +2,10 @@
 
 #include "RenderableObject.h"
 
-class ScreenSizeQuad : public RenderableObject {
+class Axis : public RenderableObject {
   public:
-    ScreenSizeQuad();
-    virtual ~ScreenSizeQuad();
+    Axis(const int length = 5);
+    ~Axis();
 
     int getVerticesCount() override;
     int getIndicesCount() override;
@@ -13,4 +13,7 @@ class ScreenSizeQuad : public RenderableObject {
 
     void initVertices(GLfloat *buf) override;
     void initIndices(GLuint *buf) override;
+
+  private:
+    int _length;
 };
