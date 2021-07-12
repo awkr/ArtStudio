@@ -2,9 +2,13 @@
 
 #include <GLFW/glfw3.h> // must included after glad
 
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
+#include <Axis.h>
 #include <Camera.h>
+#include <Cube.h>
 #include <Grid.h>
 #include <Log.h>
 #include <Shader.h>
@@ -12,8 +16,8 @@
 
 // 基础框架代码
 const char *TITLE = "ArtStudio";
-const int WIDTH = 1024;
-const int HEIGHT = 768;
+const int WIDTH = 256 * 4.5;
+const int HEIGHT = 160 * 4.5;
 GLFWwindow *window;
 int framebufferWidth, framebufferHeight;
 double fps;
@@ -24,319 +28,71 @@ enum State { NONE, LEFT_PRESS, RIGHT_PRESS, SCROLL }; // cursor operation state
 State state = NONE;
 // end
 
-// Camera
-Camera camera(glm::vec3(0, 0, 10), 60, (float)WIDTH / HEIGHT, 1, 100);
-glm::mat4 MV = glm::mat4(1);
+// cameras
+Camera camera(glm::vec3(0, 8, 10));
+Camera worldCamera(glm::vec3(0, 8, 10));
 
-void rotateCamera(const double x, const double y) {
-    camera.rotate(-(x - cursorX), -(y - cursorY));
-    cursorX = x;
-    cursorY = y;
-}
-
-void moveCamera(const double x, const double y) {
-    camera.move(glm::vec3(-(x - cursorX), 0, -(y - cursorY)) * 0.025f);
-    cursorX = x;
-    cursorY = y;
-}
-// end
-
+// scene objects
+Axis *axis;
 Grid *grid;
+Cube *cube;
 
-GLuint fboId[2];
-GLuint depthTexId[2];
-GLuint colorTexId[2];
-GLuint colorBlenderFboId;
-GLuint colorBlenderTexId;
+#define SHADER_PATH "Shaders/"
 
-void initFrontPeelingRenderTargets() {
-    glGenTextures(2, depthTexId);
-    glGenTextures(2, colorTexId);
-    glGenFramebuffers(2, fboId);
-
-    for (int i = 0; i < 2; ++i) {
-        glBindTexture(GL_TEXTURE_RECTANGLE, depthTexId[i]);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S,
-                        GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T,
-                        GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER,
-                        GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER,
-                        GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT,
-                     framebufferWidth, framebufferHeight, 0, GL_DEPTH_COMPONENT,
-                     GL_FLOAT, nullptr);
-
-        glBindTexture(GL_TEXTURE_RECTANGLE, colorTexId[i]);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S,
-                        GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T,
-                        GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER,
-                        GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER,
-                        GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, framebufferWidth,
-                     framebufferHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, fboId[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                               GL_TEXTURE_RECTANGLE, depthTexId[i], 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                               GL_TEXTURE_RECTANGLE, colorTexId[i], 0);
-    }
-
-    glGenTextures(1, &colorBlenderTexId);
-    glBindTexture(GL_TEXTURE_RECTANGLE, colorBlenderTexId);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, framebufferWidth,
-                 framebufferHeight, 0, GL_RGBA, GL_FLOAT, 0);
-
-    glGenFramebuffers(1, &colorBlenderFboId);
-    glBindFramebuffer(GL_FRAMEBUFFER, colorBlenderFboId);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                           GL_TEXTURE_RECTANGLE, depthTexId[0], 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           GL_TEXTURE_RECTANGLE, colorBlenderTexId, 0);
-
-    GL_CHECK_ERROR
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-#define SHADER_PATH "shaders/"
-
-Shader shaderCube;
-Shader shaderPeel;
-Shader shaderBlend;
-Shader shaderFinal;
-
-void buildShaders() {
-    shaderCube.init();
-    shaderCube.attachVertexShader(SHADER_PATH "cube.vert");
-    shaderCube.attachFragmentShader(SHADER_PATH "cube.frag");
-    assert(shaderCube.link());
-
-    shaderPeel.init();
-    shaderPeel.attachVertexShader(SHADER_PATH "peel.vert");
-    shaderPeel.attachFragmentShader(SHADER_PATH "peel.frag");
-    assert(shaderPeel.link());
-
-    shaderBlend.init();
-    shaderBlend.attachVertexShader(SHADER_PATH "blend.vert");
-    shaderBlend.attachFragmentShader(SHADER_PATH "blend.frag");
-    assert(shaderBlend.link());
-
-    shaderFinal.init();
-    shaderFinal.attachVertexShader(SHADER_PATH "final.vert");
-    shaderFinal.attachFragmentShader(SHADER_PATH "final.frag");
-    assert(shaderFinal.link());
-}
-
-GLuint cubeVaoId;
-GLuint cubeVboId;
-GLuint cubeIndicesId;
-
-void initCubes() {
-    glGenVertexArrays(1, &cubeVaoId);
-    glGenBuffers(1, &cubeVboId);
-    glGenBuffers(1, &cubeIndicesId);
-
-    // unit cube vertices
-    glm::vec3 vertices[8] = {
-        glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(0.5f, -0.5f, -0.5f),
-        glm::vec3(0.5f, 0.5f, -0.5f),   glm::vec3(-0.5f, 0.5f, -0.5f),
-        glm::vec3(-0.5f, -0.5f, 0.5f),  glm::vec3(0.5f, -0.5f, 0.5f),
-        glm::vec3(0.5f, 0.5f, 0.5f),    glm::vec3(-0.5f, 0.5f, 0.5f)};
-
-    GLushort indices[36] = {0, 5, 4, 5, 0, 1, 3, 7, 6, 3, 6, 2,
-                            7, 4, 6, 6, 4, 5, 2, 1, 3, 3, 1, 0,
-                            3, 0, 7, 7, 0, 4, 6, 5, 2, 2, 5, 1};
-    glBindVertexArray(cubeVaoId);
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVboId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &(vertices[0].x),
-                 GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeIndicesId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0],
-                 GL_STATIC_DRAW);
-
-    GL_CHECK_ERROR
-
-    glBindVertexArray(0);
-}
-
-GLuint fullScreenQuadVaoId;
-GLuint fullScreenQuadVboId;
-GLuint fullScreenQuadIndicesId;
-
-void initFullScreenQuad() {
-    glm::vec2 vertices[4];
-    vertices[0] = glm::vec2(0, 0);
-    vertices[1] = glm::vec2(1, 0);
-    vertices[2] = glm::vec2(1, 1);
-    vertices[3] = glm::vec2(0, 1);
-
-    GLushort indices[] = {0, 1, 2, 0, 2, 3};
-
-    glGenVertexArrays(1, &fullScreenQuadVaoId);
-    glGenBuffers(1, &fullScreenQuadVboId);
-    glGenBuffers(1, &fullScreenQuadIndicesId);
-
-    glBindVertexArray(fullScreenQuadVaoId);
-    glBindBuffer(GL_ARRAY_BUFFER, fullScreenQuadVboId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0],
-                 GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fullScreenQuadIndicesId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0],
-                 GL_STATIC_DRAW);
-
-    GL_CHECK_ERROR
-}
+void buildShaders() {}
 
 void init() {
+    glEnable(GL_MULTISAMPLE);
+
+    worldCamera.setViewType(THIRD_PERSON);
+
+    axis = new Axis();
     grid = new Grid();
-    initFrontPeelingRenderTargets();
+    cube = new Cube();
+
     buildShaders();
-    initCubes();
-    initFullScreenQuad();
 }
 
-glm::vec4 cubeColors[3] = {glm::vec4(1, 0, 0, 0.35), glm::vec4(0, 1, 0, 0.35),
-                           glm::vec4(0, 0, 1, 0.35)};
+void drawScene(const glm::mat4 &VP) {
+    glm::mat4 MVP = VP * glm::mat4(1.0f);
 
-// render normally
-void drawCubes(const glm::mat4 &MVP, Shader &shader) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    grid->render(glm::value_ptr(MVP));
 
-    glBindVertexArray(cubeVaoId);
-    shader.use();
-    for (int k = -1; k <= 1; ++k) {     // Z-axis
-        for (int j = -1; j <= 1; ++j) { // Y-axis
-            int index = 0;
-            for (int i = -1; i <= 1; ++i) { // X-axis
-                glm::mat4 T = glm::translate(glm::mat4(1),
-                                             glm::vec3(i * 2, j * 2, k * 2));
-                shader.setUniform4fv("color", &(cubeColors[index++].x));
-                shader.setUniformMat4fv("MVP", glm::value_ptr(MVP * T));
-                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
-            }
-        }
-    }
-    shader.unuse();
+    glDepthFunc(GL_ALWAYS); // avoid visual artifacts with grid lines
+    axis->render(glm::value_ptr(MVP));
+    glDepthFunc(GL_LEQUAL); // restore default settings
 
-    glBindVertexArray(0);
-}
-
-void drawFullScreenQuad() {
-    glBindVertexArray(fullScreenQuadVaoId);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-}
-
-// 逻辑变量
-bool shouldUseDepthPeeling = false;
-
-GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
-                        GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3,
-                        GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5,
-                        GL_COLOR_ATTACHMENT6};
-
-glm::vec4 backgroundColor = glm::vec4(0, 0, 0, 1);
-
-int numPasses = 4;
-// end
-
-void renderFrontPeeling(const glm::mat4 &MVP) {
-    if (shouldUseDepthPeeling) {
-        // 1 init min depth buffer
-        glBindFramebuffer(GL_FRAMEBUFFER, colorBlenderFboId);
-        glDrawBuffer(drawBuffers[0]);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glEnable(GL_DEPTH_TEST);
-        drawCubes(MVP, shaderCube);
-
-        // 2 depth peeling + blending
-        int numLayers = (numPasses - 1) * 2;
-        for (int layer = 1; layer < numLayers; ++layer) {
-            int currId = layer % 2;
-            int prevId = 1 - currId;
-
-            glBindFramebuffer(GL_FRAMEBUFFER, fboId[currId]);
-            glDrawBuffer(drawBuffers[0]);
-
-            glClearColor(0, 0, 0, 0);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            glDisable(GL_BLEND);
-            glEnable(GL_DEPTH_TEST);
-
-            shaderPeel.use();
-            shaderPeel.setTextureRect("depthTex", depthTexId[prevId], 0);
-            drawCubes(MVP, shaderPeel);
-            shaderPeel.unuse();
-
-            GL_CHECK_ERROR
-
-            glBindFramebuffer(GL_FRAMEBUFFER, colorBlenderFboId);
-            glDrawBuffer(drawBuffers[0]);
-
-            glDisable(GL_DEPTH_TEST);
-            glEnable(GL_BLEND);
-
-            glBlendEquation(GL_FUNC_ADD);
-            glBlendFuncSeparate(GL_DST_ALPHA, GL_ONE, GL_ZERO,
-                                GL_ONE_MINUS_SRC_ALPHA);
-
-            shaderBlend.use();
-            shaderBlend.setTextureRect("tempTex", colorTexId[currId], 0);
-            drawFullScreenQuad();
-            shaderBlend.unuse();
-
-            glDisable(GL_BLEND);
-
-            GL_CHECK_ERROR
-        }
-
-        // 3 final pass
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDrawBuffer(GL_BACK_LEFT);
-        glDisable(GL_DEPTH_TEST);
-
-        shaderFinal.use();
-        shaderFinal.setUniform4fv("backgroundColor", &backgroundColor.x);
-        shaderFinal.setTextureRect("colorTex", colorBlenderTexId, 0);
-        drawFullScreenQuad();
-        shaderFinal.unuse();
-
-        GL_CHECK_ERROR
-    } else {
-        glEnable(GL_DEPTH_TEST);
-        drawCubes(MVP, shaderCube);
-    }
+    cube->render(glm::value_ptr(MVP));
 }
 
 void render() {
-    glm::mat4 MVP = camera.getP() * camera.getV() * glm::mat4(1.0f);
+    // prepare data
+    auto width = framebufferWidth / 2.0f;
 
+    // setup OpenGL
+    glEnable(GL_SCISSOR_TEST);
     glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    grid->render(glm::value_ptr(MVP));
-    renderFrontPeeling(MVP);
+    // draw in camera view
+    glScissor(0, 0, width, framebufferHeight);
+
+    glClearColor(0.2, 0.3, 0.4, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glViewport(0, 0, width, framebufferHeight);
+    drawScene(camera.getP() * camera.getV());
+
+    // draw in editor view
+    glScissor(width, 0, width, framebufferHeight);
+
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glViewport(width, 0, width, framebufferHeight);
+    drawScene(worldCamera.getP() * worldCamera.getV());
+
+    // clean up
+    glDisable(GL_SCISSOR_TEST);
 }
 
 // GLFW callbacks
@@ -353,15 +109,33 @@ void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action,
         if (key == GLFW_KEY_ESCAPE) {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         } else if (key == GLFW_KEY_SPACE) {
-            shouldUseDepthPeeling = !shouldUseDepthPeeling;
+
+        } else if (key == GLFW_KEY_A) {
+            camera.move(glm::vec3(-1, 0, 0));
+        } else if (key == GLFW_KEY_D) {
+            camera.move(glm::vec3(1, 0, 0));
+        } else if (key == GLFW_KEY_W) {
+            camera.move(glm::vec3(0, 0, -1));
+        } else if (key == GLFW_KEY_S) {
+            camera.move(glm::vec3(0, 0, 1));
+        } else if (key == GLFW_KEY_Q) {
+            camera.move(glm::vec3(0, 1, 0));
+        } else if (key == GLFW_KEY_E) {
+            camera.move(glm::vec3(0, -1, 0));
         } else if (key == GLFW_KEY_Z) {
             camera.roll(15);
         } else if (key == GLFW_KEY_C) {
             camera.roll(-15);
-        } else if (key == GLFW_KEY_Q) {
-            camera.move(glm::vec3(0, 2, 0));
-        } else if (key == GLFW_KEY_E) {
-            camera.move(glm::vec3(0, -2, 0));
+        } else if (key == GLFW_KEY_UP) {
+            camera.pitch(15);
+        } else if (key == GLFW_KEY_DOWN) {
+            camera.pitch(-15);
+        } else if (key == GLFW_KEY_LEFT) {
+            camera.yaw(15);
+        } else if (key == GLFW_KEY_RIGHT) {
+            camera.yaw(-15);
+        } else if (key == GLFW_KEY_F) {
+            worldCamera.reset();
         }
     }
 }
@@ -373,13 +147,14 @@ void glfwCursorEnterCallback(GLFWwindow *window, int entered) {
 void glfwCursorPosCallback(GLFWwindow *window, double x, double y) {
     switch (state) {
     case LEFT_PRESS: // left mouse dragged
-        rotateCamera(x, y);
+        worldCamera.rotate(-(x - cursorX), -(y - cursorY));
+        cursorX = x, cursorY = y;
         break;
     case RIGHT_PRESS: // right mouse dragged
-        moveCamera(x, y);
+        worldCamera.pan(-(x - cursorX), y - cursorY);
+        cursorX = x, cursorY = y;
         break;
     case SCROLL:
-        debug("scroll ???");
         break;
     default:
         break;
@@ -412,8 +187,12 @@ void glfwMouseButtonCallback(GLFWwindow *window, int button, int action,
 
 void glfwScrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
     state = SCROLL;
-    // or: moveCamera(cursorX + xoffset, cursorY + yoffset);
-    rotateCamera(cursorX + xoffset, cursorY + yoffset);
+    worldCamera.zoom(yoffset);
+    // camera.rotate(glm::vec3(yoffset, xoffset, 0));
+
+    // // todo get world space position of screen center
+    // glm::vec3 target = glm::vec3(0);
+    // camera.rotateBy(target, glm::vec3(xoffset, yoffset, 0));
 }
 
 int main(int argc, char **argv) {
@@ -427,6 +206,8 @@ int main(int argc, char **argv) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     if (window = glfwCreateWindow(WIDTH, HEIGHT, TITLE, nullptr, nullptr);
         !window) {
@@ -448,7 +229,14 @@ int main(int argc, char **argv) {
     }
 
     glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-    glViewport(0, 0, framebufferWidth, framebufferHeight);
+
+    // todo scissor
+
+    auto width = framebufferWidth / 2.0f;
+    auto aspect = width / framebufferHeight;
+
+    camera.setAspect(aspect);
+    worldCamera.setAspect(aspect);
 
     init();
 
